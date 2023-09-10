@@ -103,4 +103,26 @@ async function replyAdminOnlyEmbed(interaction) { // Replies an embed if the use
     });
 }
 
-module.exports = { createDefaultEmbed, replyDashboardEmbed, replyAdminRequiredEmbed, replyContestEmbed, replyInvalidChannelEmbed, replyChannelSavedEmbed, replyNoHashtagsEmbed, replyHashtagsEmbed, replyAdminOnlyEmbed };
+async function replyInvalidDaysEmbed(interaction) { // Replies an embed saying the inputted days is invalid.
+    await interaction.deferReply({ ephemeral: true }); // Sends a deferred reply that is ephemeral.
+    let invalidDaysEmbed = createDefaultEmbed()
+        .setDescription(`# Invalid Age Input\n\`${interaction.fields.components[0].components[0].value}\` isn't a valid amount of days. Please enter an integer that is less than 31.`);
+    await interaction.editReply({
+        embeds: [invalidDaysEmbed],
+        ephemeral: true
+    });
+}
+
+async function replyExportingDataEmbed(interaction, daysInput) { // Replies an embed saying that the user will receive a dm with the file shortly.
+    await interaction.deferReply({ ephemeral: true }); // Sends a deferred reply that is ephemeral.
+    let exportingDataEmbed = createDefaultEmbed()
+        .setDescription(`# Exporting Data
+        \nWithin a few minutes you should receive a DM with a file that contains information regarding submitted tiktoks within the last \`${daysInput}\` days.
+        \nDo __**NOT**__ spam this command.`);
+    await interaction.editReply({
+        embeds: [exportingDataEmbed],
+        ephemeral: true
+    });
+}
+
+module.exports = { createDefaultEmbed, replyDashboardEmbed, replyAdminRequiredEmbed, replyContestEmbed, replyInvalidChannelEmbed, replyChannelSavedEmbed, replyNoHashtagsEmbed, replyHashtagsEmbed, replyAdminOnlyEmbed, replyInvalidDaysEmbed, replyExportingDataEmbed };

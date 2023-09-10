@@ -5,9 +5,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // Required imports from other files
-const { replyInvalidChannelEmbed, replyChannelSavedEmbed, replyNoHashtagsEmbed, replyHashtagsEmbed } = require(`./embedCreator.js`);
-const { showSetChannelModal, showSetHashtagsModal } = require(`./modalCreator.js`);
+const { replyInvalidChannelEmbed, replyChannelSavedEmbed, replyNoHashtagsEmbed, replyHashtagsEmbed, replyInvalidDaysEmbed, replyExportingDataEmbed } = require(`./embedCreator.js`);
+const { showSetChannelModal, showSetHashtagsModal, showDeadlineModal } = require(`./modalCreator.js`);
 const { loadSettings, setChannelID, setHashtags, getChannelID } = require(`./settings.js`);
+const { tiktokUploadTime } = require(`./tiktok.js`);
 
 const client = new Client({ // Create a new client instance
     intents: [
@@ -55,7 +56,7 @@ client.on('interactionCreate', async interaction => { // Discord interaction lis
                 await showSetHashtagsModal(interaction);
                 break;
             case `exportButton`:
-                console.log(`Exporting Data...`);
+                await showDeadlineModal(interaction);
                 break;
 
             // Modal Interactions
@@ -78,6 +79,16 @@ client.on('interactionCreate', async interaction => { // Discord interaction lis
                     await replyHashtagsEmbed(interaction, wordsWithHashtags);
                 }
                 break;
+            case `deadlineModal`:
+                let daysInput = parseInt(interaction.fields.components[0].components[0].value);
+                if (daysInput != NaN && daysInput < 32) { // Making sure a valid number was inputted and that it was less than 30
+                    
+                    await replyExportingDataEmbed(interaction, daysInput);
+                } else {
+                    await replyInvalidDaysEmbed(interaction);
+                }
+                console.log(daysInput)
+                break;
         }
     }
 });
@@ -88,10 +99,9 @@ client.on('messageCreate', (message) => { // Discord message listener
     }
     let tiktokLinkRegex = /https:\/\/(www\.)?(vm\.)?tiktok\.com\/[^\s]+/g; // Regex to extract either vm.tiktok.com links or tiktok.com links.
     let tikTokLinks = message.content.match(tiktokLinkRegex); // Using the regex to see if the message had links.
-    let tikTokData = [];
     if (tikTokLinks) { // True if TikTok links were submitted.
-        tikTokLinks.forEach(function (tikTokLink) {
-            const submissionInfo = {
+        tikTokLinks.forEach(function (tikTokLink) { // Adding all tiktok links to the csv file.
+            const submissionInfo = { // Extracting identifying information about who submitted which link.
                 discordHandle: message.author.username,
                 discordID: message.author.id,
                 videoLink: tikTokLink,
@@ -102,6 +112,5 @@ client.on('messageCreate', (message) => { // Discord message listener
         });
     }
 });
-
 
 client.login(process.env.DISCORD_TOKEN); // Logging into the discord bot.
