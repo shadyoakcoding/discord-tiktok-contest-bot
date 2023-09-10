@@ -83,11 +83,12 @@ client.on('interactionCreate', async interaction => { // Discord interaction lis
 });
 
 client.on('messageCreate', (message) => { // Discord message listener
-    let channelToMonitor = getChannelID(); // Check if the message is in the channel you want to monitor
-    if (message.channel.id === channelToMonitor) { // This message is in the channel you want to monitor
-        console.log(`Received a message in ${message.channel.name}: ${message.content}`);
-        // You can add your custom logic here to handle the incoming message
+    if (!message.channel.id === getChannelID()) { // Stopping code execution if message isn't in the right channel.
+        return;
     }
+    let tiktokLinkRegex = /https:\/\/(www\.)?(vm\.)?tiktok\.com\/[^\s]+/g; // Regex to extract either vm.tiktok.com links or tiktok.com links.
+    let tikTokLinks = message.content.match(tiktokLinkRegex); // Using the regex to see if the message had links.
+    console.log(tikTokLinks)
 });
 
 
