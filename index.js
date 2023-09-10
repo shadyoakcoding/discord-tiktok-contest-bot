@@ -5,10 +5,10 @@ const fs = require('fs');
 const path = require('node:path');
 
 // Required imports from other files
-const { replyInvalidChannelEmbed, replyChannelSavedEmbed, replyNoHashtagsEmbed, replyHashtagsEmbed, replyInvalidDaysEmbed, replyExportingDataEmbed } = require(`./embedCreator.js`);
+const { replyInvalidChannelEmbed, replyChannelSavedEmbed, replyNoHashtagsEmbed, replyHashtagsEmbed, replyInvalidDaysEmbed, replyExportingDataEmbed, dmExportEmbed } = require(`./embedCreator.js`);
 const { showSetChannelModal, showSetHashtagsModal, showDeadlineModal } = require(`./modalCreator.js`);
 const { loadSettings, setChannelID, setHashtags, getChannelID } = require(`./settings.js`);
-const { tiktokUploadTime, getFullURL } = require(`./tiktok.js`);
+const { tiktokUploadTime, getFullURL, createExport } = require(`./tiktok.js`);
 
 const client = new Client({ // Create a new client instance
     intents: [
@@ -81,13 +81,14 @@ client.on('interactionCreate', async interaction => { // Discord interaction lis
                 break;
             case `deadlineModal`:
                 let daysInput = parseInt(interaction.fields.components[0].components[0].value);
-                if (daysInput != NaN && daysInput < 32) { // Making sure a valid number was inputted and that it was less than 30
-
-                    await replyExportingDataEmbed(interaction, daysInput);
+                if (daysInput != NaN && daysInput < 1000) { // Making sure a valid number was inputted and that it was less than 30
+                    await replyExportingDataEmbed(interaction, daysInput); // Send an embed saying the data is being exported.
+                    await createExport(daysInput); // Creating the export file to DM the bot user.
+                    let exportFile = await fs.promises.readFile('./export.csv'); // Getting the file to attach to the DM
+                    await dmExportEmbed(interaction, exportFile, daysInput); // Sending the DM with the completed file
                 } else {
                     await replyInvalidDaysEmbed(interaction);
                 }
-                console.log(daysInput)
                 break;
         }
     }

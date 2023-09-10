@@ -106,7 +106,7 @@ async function replyAdminOnlyEmbed(interaction) { // Replies an embed if the use
 async function replyInvalidDaysEmbed(interaction) { // Replies an embed saying the inputted days is invalid.
     await interaction.deferReply({ ephemeral: true }); // Sends a deferred reply that is ephemeral.
     let invalidDaysEmbed = createDefaultEmbed()
-        .setDescription(`# Invalid Age Input\n\`${interaction.fields.components[0].components[0].value}\` isn't a valid amount of days. Please enter an integer that is less than 31.`);
+        .setDescription(`# Invalid Age Input\n\`${interaction.fields.components[0].components[0].value}\` isn't a valid amount of days. Please enter an integer that is less than 1000.`);
     await interaction.editReply({
         embeds: [invalidDaysEmbed],
         ephemeral: true
@@ -125,4 +125,18 @@ async function replyExportingDataEmbed(interaction, daysInput) { // Replies an e
     });
 }
 
-module.exports = { createDefaultEmbed, replyDashboardEmbed, replyAdminRequiredEmbed, replyContestEmbed, replyInvalidChannelEmbed, replyChannelSavedEmbed, replyNoHashtagsEmbed, replyHashtagsEmbed, replyAdminOnlyEmbed, replyInvalidDaysEmbed, replyExportingDataEmbed };
+async function dmExportEmbed(interaction, exportFile, maxAge) { // Sends a DM to the user that has the export file.
+    let exportCompleteEmbed = createDefaultEmbed()
+        .setDescription(`# Export Complete
+    \nHey <@${interaction.user.id}>! Please see above the attached data exported from submitted tiktoks that were uploaded at most \`${maxAge}\` days ago.
+    \nI recommend looking at this data in [Google Sheets](https://www.youtube.com/watch?v=wH1y_oTUUX4)`);
+    await interaction.user.send({
+        embeds: [exportCompleteEmbed],
+        files: [{
+            attachment: exportFile,
+            name: `export.csv`
+        }]
+    });
+}
+
+module.exports = { createDefaultEmbed, replyDashboardEmbed, replyAdminRequiredEmbed, replyContestEmbed, replyInvalidChannelEmbed, replyChannelSavedEmbed, replyNoHashtagsEmbed, replyHashtagsEmbed, replyAdminOnlyEmbed, replyInvalidDaysEmbed, replyExportingDataEmbed, dmExportEmbed };
