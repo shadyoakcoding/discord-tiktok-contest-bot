@@ -88,7 +88,19 @@ client.on('messageCreate', (message) => { // Discord message listener
     }
     let tiktokLinkRegex = /https:\/\/(www\.)?(vm\.)?tiktok\.com\/[^\s]+/g; // Regex to extract either vm.tiktok.com links or tiktok.com links.
     let tikTokLinks = message.content.match(tiktokLinkRegex); // Using the regex to see if the message had links.
-    console.log(tikTokLinks)
+    let tikTokData = [];
+    if (tikTokLinks) { // True if TikTok links were submitted.
+        tikTokLinks.forEach(function (tikTokLink) {
+            const submissionInfo = {
+                discordHandle: message.author.username,
+                discordID: message.author.id,
+                videoLink: tikTokLink,
+                submissionTime: new Date(message.createdTimestamp).toLocaleDateString('en-US')
+            };
+            const csvData = `${submissionInfo.discordHandle},${submissionInfo.discordID},${submissionInfo.videoLink},${submissionInfo.submissionTime}\n`; // Append the data to the CSV file
+            fs.appendFileSync('tiktok_data.csv', csvData);
+        });
+    }
 });
 
 
