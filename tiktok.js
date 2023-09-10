@@ -1,5 +1,5 @@
 function tiktokUploadTime(videoID) { // Function to get the time that a tikotk was uploaded based on the video ID. This is thanks to https://dfir.blog/tinkering-with-tiktok-timestamps/.
-    let binaryString = videoID.toString(2); // Turning the video ID to binary.
+    let binaryString = parseInt(videoID).toString(2); // Turning the video ID to binary.
     const lengthDiff = 64 - binaryString.length; // Getting how much shorter the binary is than 64 chars.
     if (lengthDiff > 0) {
         binaryString = "0".repeat(lengthDiff) + binaryString; // Making sure that the binary string is 64 bits.
@@ -26,6 +26,12 @@ async function getVideoDetails(URL) { // A function that will take a given TikTo
 
 async function getFullURL(shortenedURL) { // Getting the full URL of a shortened tiktok url
     try {
+        if (!shortenedURL.indexOf(`https://vm.tiktok.com`)) { // If the inputted URL isn't shortened, remove extra info and return it.
+            let questionMarkIndex = shortenedURL.indexOf(`?`); // Getting the first index of a question mark in the shortened URL.
+            if (questionMarkIndex !== -1) {
+                return fullURL.substring(0, questionMarkIndex); // If the URL has question marks, remove the question mark and characters after it and then return the string.
+            }
+        }
         const response = await fetch(shortenedURL, {
             method: 'HEAD', // Use HEAD request to fetch headers only
             redirect: 'follow', // Follow redirects
@@ -49,7 +55,7 @@ async function getFullURL(shortenedURL) { // Getting the full URL of a shortened
     }
 }
 
-const shortenedURL = 'https://vm.tiktok.com/ZMjMyTRqN/';
+const shortenedURL = 'https://www.tiktok.com/@clippedode/video/7275875267300871470?is_from_webapp=1&sender_device=pc';
 getFullURL(shortenedURL)
     .then((fullURL) => {
         console.log(fullURL)
@@ -58,4 +64,4 @@ getFullURL(shortenedURL)
         console.error(error);
     });
 
-module.exports = { tiktokUploadTime };
+module.exports = { tiktokUploadTime, getFullURL };

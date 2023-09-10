@@ -8,7 +8,7 @@ const path = require('node:path');
 const { replyInvalidChannelEmbed, replyChannelSavedEmbed, replyNoHashtagsEmbed, replyHashtagsEmbed, replyInvalidDaysEmbed, replyExportingDataEmbed } = require(`./embedCreator.js`);
 const { showSetChannelModal, showSetHashtagsModal, showDeadlineModal } = require(`./modalCreator.js`);
 const { loadSettings, setChannelID, setHashtags, getChannelID } = require(`./settings.js`);
-const { tiktokUploadTime } = require(`./tiktok.js`);
+const { tiktokUploadTime, getFullURL } = require(`./tiktok.js`);
 
 const client = new Client({ // Create a new client instance
     intents: [
@@ -82,7 +82,7 @@ client.on('interactionCreate', async interaction => { // Discord interaction lis
             case `deadlineModal`:
                 let daysInput = parseInt(interaction.fields.components[0].components[0].value);
                 if (daysInput != NaN && daysInput < 32) { // Making sure a valid number was inputted and that it was less than 30
-                    
+
                     await replyExportingDataEmbed(interaction, daysInput);
                 } else {
                     await replyInvalidDaysEmbed(interaction);
@@ -100,16 +100,20 @@ client.on('messageCreate', (message) => { // Discord message listener
     let tiktokLinkRegex = /https:\/\/(www\.)?(vm\.)?tiktok\.com\/[^\s]+/g; // Regex to extract either vm.tiktok.com links or tiktok.com links.
     let tikTokLinks = message.content.match(tiktokLinkRegex); // Using the regex to see if the message had links.
     if (tikTokLinks) { // True if TikTok links were submitted.
-        tikTokLinks.forEach(function (tikTokLink) { // Adding all tiktok links to the csv file.
-            const submissionInfo = { // Extracting identifying information about who submitted which link.
-                discordHandle: message.author.username,
-                discordID: message.author.id,
-                videoLink: tikTokLink,
-                submissionTime: new Date(message.createdTimestamp).toLocaleDateString('en-US')
-            };
-            const csvData = `${submissionInfo.discordHandle},${submissionInfo.discordID},${submissionInfo.videoLink},${submissionInfo.submissionTime}\n`; // Append the data to the CSV file
-            fs.appendFileSync('tiktok_data.csv', csvData);
-        });
+        (async () => { // Starting the asynchronous part of the code
+            for (const tikTokLink of tikTokLinks) { // Looping through all inputted tiktok links
+                const fullURL = await getFullURL(tikTokLink); // Getting the full URL of the submitted tiktoks and trimming extra data.
+                const submissionInfo = {
+                    discordHandle: message.author.username,
+                    discordID: message.author.id,
+                    videoLink: fullURL,
+                    submissionTime: new Date(message.createdTimestamp).toLocaleDateString('en-US'),
+                    uploadTime: tiktokUploadTime(fullURL.match(/\d+$/)[0]) // The time the tiktok was uploaded, extracted from the video ID
+                };
+                const csvData = `${submissionInfo.discordHandle},${submissionInfo.discordID},${submissionInfo.videoLink},${submissionInfo.submissionTime},${submissionInfo.uploadTime}\n`; // Append the data to the CSV file
+                fs.appendFileSync('tiktok_data.csv', csvData);
+            }
+        })();
     }
 });
 
