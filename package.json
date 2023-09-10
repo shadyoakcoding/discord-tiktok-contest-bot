@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/shadyoakcoding/discord-tiktok-contest-bot/issues"
   },
-  "homepage": "https://github.com/shadyoakcoding/discord-tiktok-contest-bot#readme"
+  "homepage": "https://github.com/shadyoakcoding/discord-tiktok-contest-bot#readme",
+  "dependencies": {
+    "dotenv": "^16.3.1"
+  }
 }

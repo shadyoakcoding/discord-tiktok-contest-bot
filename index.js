@@ -5,6 +5,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // Required imports from other files
+const { replyInvalidChannelEmbed, replyChannelSavedEmbed } = require(`./embedCreator.js`);
+const { showSetChannelModal, showSetHashtagsModal } = require(`./modalCreator.js`);
+const { settings, loadSettings, setChannelID } = require(`./settings.js`);
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds], partials: [Partials.Channel] }); // Create a new client instance
 
@@ -21,7 +24,7 @@ for (const file of commandFiles) {
 // Runs only once when the bot starts
 client.once('ready', () => {
     console.log('Connected to Discord!');
-    startTransactionListener();
+    loadSettings();
 });
 
 client.on('interactionCreate', async interaction => { // Discord interaction listener.
@@ -37,8 +40,25 @@ client.on('interactionCreate', async interaction => { // Discord interaction lis
     } else {
         console.log(interaction.customId); // Logging the interaction that was triggered.
         switch (interaction.customId) { // Detecting for the customIds of buttons or modals and executing their code.
-            case `homeButton`:
-                
+            // Button Interactions
+            case `setChannelButton`:
+                await showSetChannelModal(interaction);
+                break;
+            case `setHashtagsButton`:
+                await showSetHashtagsModal(interaction);
+                break;
+            case `exportButton`:
+                console.log(`Exporting Data...`);
+                break;
+            // Modal Interactions
+            case `channelIDModal`:
+                let channelID = interaction.fields.components[0].components[0].value;
+                if (/^\d{19}$/.test(channelID)) { // Regex to make sure that the number inputted was a channel ID.
+                    setChannelID(channelID); // Saving the channel ID.
+                    await replyChannelSavedEmbed(interaction, channelID); // Sending the embed to say the channel ID was changed.
+                } else {
+                    await replyInvalidChannelEmbed(interaction);
+                }
                 break;
         }
     }
