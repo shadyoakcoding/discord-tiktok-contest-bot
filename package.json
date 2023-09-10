@@ -1,0 +1,19 @@
+{
+  "name": "discord-tiktok-contest-bot",
+  "version": "1.0.0",
+  "description": "Discord bot for tracking tiktok analytics in a submitted channel",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shadyoakcoding/discord-tiktok-contest-bot.git"
+  },
+  "author": "Shady",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shadyoakcoding/discord-tiktok-contest-bot/issues"
+  },
+  "homepage": "https://github.com/shadyoakcoding/discord-tiktok-contest-bot#readme"
+}
