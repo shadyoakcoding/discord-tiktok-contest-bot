@@ -1,4 +1,11 @@
 const puppeteer = require(`puppeteer`);
+const csv = require('csv-parser');
+const fs = require('fs');
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+const { getHashtags } = require(`./settings.js`);
+
+const TIKTOK_DATA = `./tiktok_data.csv`;
+const OUTPUT_CSV = 'output.csv';
 
 function tiktokUploadTime(videoID) { // Function to get the time that a tikotk was uploaded based on the video ID. This is thanks to https://dfir.blog/tinkering-with-tiktok-timestamps/.
     let binaryString = parseInt(videoID).toString(2); // Turning the video ID to binary.
@@ -23,13 +30,16 @@ function tiktokUploadTime(videoID) { // Function to get the time that a tikotk w
 }
 
 async function getVideoDetails(URL) { // A function that will take a given TikTok URL and provide details such as upload time, uploader, likes, bookmarks, comments, and shares.
-    const browser = await puppeteer.launch(); // Launching the puppeteer browser.
+    console.log(`Getting video details of ${URL}.`);
+    const browser = await puppeteer.launch({
+        headless: "new"
+    }); // Launching the puppeteer browser.
     const page = await browser.newPage();
 
     const tiktokUrl = URL; // Replace with the actual TikTok URL
     await page.goto(tiktokUrl);
 
-    
+
     const getHashtagsArray = async () => { // Function to get text content of StrongText elements within the specified selector
         const selector = '[data-e2e="browse-video-desc"]'; // The selector that holds all of the strongText (hashtags)
         await page.waitForSelector(selector);
@@ -107,10 +117,62 @@ async function getFullURL(shortenedURL) { // Getting the full URL of a shortened
     }
 }
 
-getVideoDetails(`https://www.tiktok.com/@blitzskii.pt2/video/7274376192965233962`)
-    .then(banana => {
-        console.log(banana)
+async function createExport() {
+    const requiredHashtags = getHashtags().map(tag => tag.toLowerCase()); // The required hashtags array but in lowercase
+    const newFile = []; // Creating what will be the new csv file.
+    const promises = []; // Array to hold all the promises.
+    await new Promise((resolve, reject) => {
+        fs.createReadStream(TIKTOK_DATA)
+            .pipe(csv())
+            .on('data', (row) => {
+                const promise = getVideoDetails(row.tikTokLink)
+                    .then((stats) => {
+                        const newRow = {
+                            'Upload Date': row.uploadDate,
+                            'Discord Handle': row.discordHandle,
+                            'Discord ID': row.discordID,
+                            'TikTok Link': row.tikTokLink,
+                            'Likes': stats.likeCount,
+                            'Comments': stats.commentCount,
+                            'Bookmarks': stats.bookmarkCount,
+                            'Shares': stats.shareCount,
+                        };
+                        const tikTokHashtags = stats.hashtags.map(tag => tag.toLowerCase().trim()); // The hashtags in the tiktok but in lowercase.
+                        for (const requiredTag of requiredHashtags) {
+                            if (tikTokHashtags.includes(requiredTag)) {
+                                newFile.push(newRow); // At least one value from requiredHashtags (case-insensitive) is in stats.hashtags
+                                break; // Exit the loop once a match is found
+                            }
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error fetching video details:', error);
+                    });
+
+                promises.push(promise);
+            })
+            .on('end', () => {
+                Promise.all(promises)
+                    .then(() => {
+                        resolve();
+                    })
+                    .catch((error) => {
+                        reject(error);
+                    });
+            })
+            .on('error', (error) => {
+                reject(error);
+            });
     });
 
+    const csvWriter = createCsvWriter({
+        path: OUTPUT_CSV,
+        header: ['Upload Date', 'Discord Handle', 'Discord ID', 'TikTok Link', 'Likes', 'Comments', 'Bookmarks', 'Shares'],
+    });
+    await csvWriter.writeRecords(newFile);
+    console.log('CSV file processing completed.');
+}
+
+createExport();
 
 module.exports = { tiktokUploadTime, getFullURL };

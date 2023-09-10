@@ -1,7 +1,7 @@
 // Importing Required Dependencies
 require('dotenv').config();
 const { Client, GatewayIntentBits, Partials, Collection } = require('discord.js');
-const fs = require('node:fs');
+const fs = require('fs');
 const path = require('node:path');
 
 // Required imports from other files
@@ -107,10 +107,9 @@ client.on('messageCreate', (message) => { // Discord message listener
                     discordHandle: message.author.username,
                     discordID: message.author.id,
                     videoLink: fullURL,
-                    submissionTime: new Date(message.createdTimestamp).toLocaleDateString('en-US'),
                     uploadTime: tiktokUploadTime(fullURL.match(/\d+$/)[0]) // The time the tiktok was uploaded, extracted from the video ID
                 };
-                const csvData = `${submissionInfo.discordHandle},${submissionInfo.discordID},${submissionInfo.videoLink},${submissionInfo.submissionTime},${submissionInfo.uploadTime}\n`; // Append the data to the CSV file
+                const csvData = `${submissionInfo.discordHandle},${submissionInfo.discordID},${submissionInfo.videoLink},${submissionInfo.uploadTime}\n`; // Append the data to the CSV file
                 fs.appendFileSync('tiktok_data.csv', csvData);
             }
         })();
