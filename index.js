@@ -5,11 +5,18 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 // Required imports from other files
-const { replyInvalidChannelEmbed, replyChannelSavedEmbed } = require(`./embedCreator.js`);
+const { replyInvalidChannelEmbed, replyChannelSavedEmbed, replyNoHashtagsEmbed, replyHashtagsEmbed } = require(`./embedCreator.js`);
 const { showSetChannelModal, showSetHashtagsModal } = require(`./modalCreator.js`);
-const { settings, loadSettings, setChannelID } = require(`./settings.js`);
+const { loadSettings, setChannelID, setHashtags, getChannelID } = require(`./settings.js`);
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds], partials: [Partials.Channel] }); // Create a new client instance
+const client = new Client({ // Create a new client instance
+    intents: [
+        GatewayIntentBits.Guilds, // Required to have the bot get guild (server) information
+        GatewayIntentBits.GuildMessages, // Required to have the bot detect incoming messages in a server.
+        GatewayIntentBits.MessageContent, // Required for the bot to read the contents of detected messages.
+    ],
+    partials: [Partials.Channel]
+});
 
 // Essential for the command handler:
 client.commands = new Collection();
@@ -50,6 +57,7 @@ client.on('interactionCreate', async interaction => { // Discord interaction lis
             case `exportButton`:
                 console.log(`Exporting Data...`);
                 break;
+
             // Modal Interactions
             case `channelIDModal`:
                 let channelID = interaction.fields.components[0].components[0].value;
@@ -60,8 +68,27 @@ client.on('interactionCreate', async interaction => { // Discord interaction lis
                     await replyInvalidChannelEmbed(interaction);
                 }
                 break;
+            case `hashtagsModal`:
+                const words = interaction.fields.components[0].components[0].value.match(/\w+/g); // Using regex to find inputted words
+                if (!words) { // True if no words were inputted.
+                    await replyNoHashtagsEmbed(interaction, interaction.fields.components[0].components[0].value);
+                } else {
+                    const wordsWithHashtags = words.map(word => `#${word}`);
+                    setHashtags(wordsWithHashtags);
+                    await replyHashtagsEmbed(interaction, wordsWithHashtags);
+                }
+                break;
         }
     }
 });
+
+client.on('messageCreate', (message) => { // Discord message listener
+    let channelToMonitor = getChannelID(); // Check if the message is in the channel you want to monitor
+    if (message.channel.id === channelToMonitor) { // This message is in the channel you want to monitor
+        console.log(`Received a message in ${message.channel.name}: ${message.content}`);
+        // You can add your custom logic here to handle the incoming message
+    }
+});
+
 
 client.login(process.env.DISCORD_TOKEN); // Logging into the discord bot.

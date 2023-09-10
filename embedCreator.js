@@ -1,7 +1,8 @@
 const { EmbedBuilder } = require('discord.js');
 
 // Pulling required functions from other files
-const { setChannelButton, setHashtagsButton, exportButton } = require(`./discordButtons.js`)
+const { setChannelButton, setHashtagsButton, exportButton } = require(`./discordButtons.js`);
+const { getChannelID, getHashtags } = require('./settings.js');
 
 function createDefaultEmbed() { // A function to create a default Unchained embed.
     let defaultEmbed = new EmbedBuilder()
@@ -15,8 +16,8 @@ async function replyDashboardEmbed(interaction) { // Replies with the dashboard 
     let dashboardEmbed = createDefaultEmbed()
         .setDescription(`# TikTok Bot Administrator Menu
     \nClick one of three buttons to do one of the following actions:
-    \n\`i.\` Set the [channel ID](https://www.youtube.com/watch?v=NLWtSHWKbAI) of the TikTok submission channel.
-    \n\`ii.\` Set the hashtags that the TikToks must have to count as a valid submission.
+    \n\`i.\` Set the [channel ID](https://www.youtube.com/watch?v=NLWtSHWKbAI) of the TikTok submission channel (currently <#${getChannelID()}>).
+    \n\`ii.\` Set the hashtags that the TikToks must have to count as a valid submission (currently \`${getHashtags()}\`).
     \n\`iii.\` Export the file that contains the information regarding submitted TikToks.`);
     await interaction.editReply({
         embeds: [dashboardEmbed], components: [
@@ -63,14 +64,43 @@ async function replyInvalidChannelEmbed(interaction) { // Replies an embed with 
     });
 }
 
-async function replyChannelSavedEmbed(interaction, channelID) {
+async function replyChannelSavedEmbed(interaction, channelID) { // Sends an ambed saying the channel was saved.
     await interaction.deferReply({ ephemeral: true }); // Sends a deferred reply that is ephemeral.
     let channelSavedEmbed = createDefaultEmbed()
         .setDescription(`# The TikTok submission channel has been saved!\nSubmissions must now be in <#${channelID}>. If you can't click on that channel, you probably did something wrong.`);
     await interaction.editReply({
         embeds: [channelSavedEmbed],
         ephemeral: true
-    })
+    });
 }
 
-module.exports = { createDefaultEmbed, replyDashboardEmbed, replyAdminRequiredEmbed, replyContestEmbed, replyInvalidChannelEmbed, replyChannelSavedEmbed };
+async function replyNoHashtagsEmbed(interaction, inputString) { // Sends an embed if no hashtags were inputted.
+    await interaction.deferReply({ ephemeral: true }); // Sends a deferred reply that is ephemeral.
+    let noHashtagsEmbed = createDefaultEmbed()
+        .setDescription(`# Invalid Hashtags\nWe couldn't find any hashtags in \`${inputString}\`. If you believe this is an error please contact <@488095760160915481>`);
+    await interaction.editReply({
+        embeds: [noHashtagsEmbed],
+        ephemeral: true
+    });
+}
+
+async function replyHashtagsEmbed(interaction, wordsWithHashtags) { // Replies an embed saying which hashtags were saved.
+    await interaction.deferReply({ ephemeral: true }); // Sends a deferred reply that is ephemeral.
+    let hashtagsEmbed = createDefaultEmbed()
+        .setDescription(`# Hashtags Saved\nTikTok submissions now must contain these hashtags: \`${wordsWithHashtags}\``);
+    await interaction.editReply({
+        embeds: [hashtagsEmbed],
+        ephemeral: true
+    });
+}
+
+async function replyAdminOnlyEmbed(interaction) { // Replies an embed if the user interacting isn't administrator.
+    let adminOnlyEmbed = createDefaultEmbed()
+        .setDescription(`# This command is for administrators only!\nTry running \`/tiktokcontest\``);
+    await interaction.editReply({
+        embeds: [adminOnlyEmbed],
+        ephemeral: true
+    });
+}
+
+module.exports = { createDefaultEmbed, replyDashboardEmbed, replyAdminRequiredEmbed, replyContestEmbed, replyInvalidChannelEmbed, replyChannelSavedEmbed, replyNoHashtagsEmbed, replyHashtagsEmbed, replyAdminOnlyEmbed };

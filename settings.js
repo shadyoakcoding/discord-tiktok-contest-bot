@@ -42,4 +42,4 @@ function setChannelID(newChannelID) { // Function to set a new channelID
   saveSettings();
 }
 
-module.exports = { settings, loadSettings, setChannelID };
+module.exports = { settings, loadSettings, setChannelID, getChannelID, setHashtags, getHashtags };
