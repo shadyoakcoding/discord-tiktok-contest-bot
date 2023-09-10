@@ -1,3 +1,5 @@
+const puppeteer = require(`puppeteer`);
+
 function tiktokUploadTime(videoID) { // Function to get the time that a tikotk was uploaded based on the video ID. This is thanks to https://dfir.blog/tinkering-with-tiktok-timestamps/.
     let binaryString = parseInt(videoID).toString(2); // Turning the video ID to binary.
     const lengthDiff = 64 - binaryString.length; // Getting how much shorter the binary is than 64 chars.
@@ -21,7 +23,57 @@ function tiktokUploadTime(videoID) { // Function to get the time that a tikotk w
 }
 
 async function getVideoDetails(URL) { // A function that will take a given TikTok URL and provide details such as upload time, uploader, likes, bookmarks, comments, and shares.
+    const browser = await puppeteer.launch(); // Launching the puppeteer browser.
+    const page = await browser.newPage();
 
+    const tiktokUrl = URL; // Replace with the actual TikTok URL
+    await page.goto(tiktokUrl);
+
+    
+    const getHashtagsArray = async () => { // Function to get text content of StrongText elements within the specified selector
+        const selector = '[data-e2e="browse-video-desc"]'; // The selector that holds all of the strongText (hashtags)
+        await page.waitForSelector(selector);
+        const element = await page.$(selector);
+        const hashtagsArray = await element.$$eval('strong', (elements) => {
+            return elements.map((el) => el.textContent);
+        });
+        return hashtagsArray;
+    };
+    const hashtagsArray = await getHashtagsArray();
+
+    await page.waitForSelector('[data-e2e="like-count"]'); // Wait for the element containing like count to be visible
+    const likeCountElement = await page.$('[data-e2e="like-count"]'); // The like count element.
+    const likeCount = await page.evaluate((element) => {
+        return element.textContent;
+    }, likeCountElement);
+
+    await page.waitForSelector('[data-e2e="comment-count"]'); // Wait for the element containing comment count to be visible
+    const commentCountElement = await page.$('[data-e2e="comment-count"]'); // The comment count element
+    const commentCount = await page.evaluate((element) => {
+        return element.textContent;
+    }, commentCountElement);
+
+    await page.waitForSelector('[data-e2e="undefined-count"]'); // Wait for the element containing bookmark count to be visible
+    const bookmarkCountElement = await page.$('[data-e2e="undefined-count"]'); // The bookmark count element
+    const bookmarkCount = await page.evaluate((element) => {
+        return element.textContent;
+    }, bookmarkCountElement);
+
+    await page.waitForSelector('[data-e2e="share-count"]'); // Wait for the element containing share count to be visible
+    const shareCountElement = await page.$('[data-e2e="share-count"]'); // The share count element.
+    const shareCount = await page.evaluate((element) => {
+        return element.textContent;
+    }, shareCountElement);
+
+    await browser.close(); // Close the browser when done
+
+    return { // Returning the scraped data.
+        likeCount: likeCount,
+        commentCount: commentCount,
+        bookmarkCount: bookmarkCount,
+        shareCount: shareCount,
+        hashtags: hashtagsArray
+    }
 }
 
 async function getFullURL(shortenedURL) { // Getting the full URL of a shortened tiktok url
@@ -55,13 +107,10 @@ async function getFullURL(shortenedURL) { // Getting the full URL of a shortened
     }
 }
 
-const shortenedURL = 'https://www.tiktok.com/@clippedode/video/7275875267300871470?is_from_webapp=1&sender_device=pc';
-getFullURL(shortenedURL)
-    .then((fullURL) => {
-        console.log(fullURL)
-    })
-    .catch((error) => {
-        console.error(error);
+getVideoDetails(`https://www.tiktok.com/@blitzskii.pt2/video/7274376192965233962`)
+    .then(banana => {
+        console.log(banana)
     });
+
 
 module.exports = { tiktokUploadTime, getFullURL };
