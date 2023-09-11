@@ -1,8 +1,8 @@
 const { EmbedBuilder } = require('discord.js');
 
 // Pulling required functions from other files
-const { setChannelButton, setHashtagsButton, exportButton } = require(`./discordButtons.js`);
-const { getChannelID, getHashtags } = require('./settings.js');
+const { setChannelButton, setHashtagsButton, exportButton, prizeButton } = require(`./discordButtons.js`);
+const { getChannelID, getHashtags, getPrize } = require('./settings.js');
 
 function createDefaultEmbed() { // A function to create a default Unchained embed.
     let defaultEmbed = new EmbedBuilder()
@@ -23,7 +23,7 @@ async function replyDashboardEmbed(interaction) { // Replies with the dashboard 
         embeds: [dashboardEmbed], components: [
             {
                 type: 1,
-                components: [setChannelButton, setHashtagsButton, exportButton],
+                components: [setChannelButton, setHashtagsButton, prizeButton, exportButton],
             },
         ]
         , ephemeral: true
@@ -44,13 +44,13 @@ async function replyContestEmbed(interaction) { // Replies an embed with contest
     let TEMPORARY_CHANNEL_ID = `755747171638181936`;
     let HASHTAGS = getHashtags();
     let HASHTAGSTRING = ``;
-    for ( let hashtagNumber = 0; hashtagNumber < HASHTAGS.length; hashtagNumber++ ) { // Iterating through all of the hashtags.
+    for (let hashtagNumber = 0; hashtagNumber < HASHTAGS.length; hashtagNumber++) { // Iterating through all of the hashtags.
         HASHTAGSTRING += `[**${HASHTAGS[hashtagNumber]}**](https://www.tiktok.com/search/video?q=%23${HASHTAGS[hashtagNumber].substring(1)})`;
         if (HASHTAGS.length == 2 && hashtagNumber != 1) {
             HASHTAGSTRING += ` and `;
         }
         if (HASHTAGS.length > 2) {
-            if(hashtagNumber != HASHTAGS.length - 1) {
+            if (hashtagNumber != HASHTAGS.length - 1) {
                 HASHTAGSTRING += `, `;
             } else {
                 HASHTAGSTRING += ` and `
@@ -59,7 +59,7 @@ async function replyContestEmbed(interaction) { // Replies an embed with contest
     }
     let adminOnlyEmbed = createDefaultEmbed()
         .setDescription(`# TikTok Contest!
-    \nSubmit your TikToks in <#${TEMPORARY_CHANNEL_ID}> and the submission with the most views every week will win [PRIZE].
+    \nSubmit your TikToks in <#${TEMPORARY_CHANNEL_ID}> and the submission with the most views every week will win ${getPrize()}.
     \nBe sure to use the hashtags ${HASHTAGSTRING} in order for your TikTok to be counted!`);
     await interaction.editReply({
         embeds: [adminOnlyEmbed],
@@ -152,4 +152,15 @@ async function dmExportEmbed(interaction, exportFile, maxAge) { // Sends a DM to
     });
 }
 
-module.exports = { createDefaultEmbed, replyDashboardEmbed, replyAdminRequiredEmbed, replyContestEmbed, replyInvalidChannelEmbed, replyChannelSavedEmbed, replyNoHashtagsEmbed, replyHashtagsEmbed, replyAdminOnlyEmbed, replyInvalidDaysEmbed, replyExportingDataEmbed, dmExportEmbed };
+async function replyPrizeEmbed(interaction, prizeInput) {
+    await interaction.deferReply({ ephemeral: true }); // Sends a deferred reply that is ephemeral.
+    let prizeEmbed = createDefaultEmbed()
+        .setDescription(`# Prize has been set
+        \nYou have set the prize as "${prizeInput}"`);
+    await interaction.editReply({
+        embeds: [prizeEmbed],
+        ephemeral: true
+    });
+}
+
+module.exports = { createDefaultEmbed, replyDashboardEmbed, replyAdminRequiredEmbed, replyContestEmbed, replyInvalidChannelEmbed, replyChannelSavedEmbed, replyNoHashtagsEmbed, replyHashtagsEmbed, replyAdminOnlyEmbed, replyInvalidDaysEmbed, replyExportingDataEmbed, dmExportEmbed, replyPrizeEmbed };

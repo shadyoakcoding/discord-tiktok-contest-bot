@@ -37,7 +37,7 @@ async function showSetHashtagsModal(interaction) { // Function to show the set c
 async function showDeadlineModal(interaction) {
     let daysInput = new TextInputBuilder() // Creating the days input for the modal.
         .setCustomId(`daysInput`)
-        .setLabel(`Video Age (in days)`)
+        .setLabel(`TikTok Age (in days)`)
         .setStyle(TextInputStyle.Short);
 
     let firstActionRow = new ActionRowBuilder()
@@ -51,4 +51,21 @@ async function showDeadlineModal(interaction) {
     await interaction.showModal(deadlineModal); // Show the modal to the user who made this interaction.
 }
 
-module.exports = { showSetChannelModal, showSetHashtagsModal, showDeadlineModal };
+async function showPrizeInputModal(interaction) {
+    let prizeInput = new TextInputBuilder() // Creating the days input for the modal.
+        .setCustomId(`prizeInput`)
+        .setLabel(`Prize`)
+        .setStyle(TextInputStyle.Short);
+
+    let firstActionRow = new ActionRowBuilder()
+        .addComponents(prizeInput);
+
+    let prizeInputModal = new ModalBuilder() // Creating the modal that contains the input fields.
+        .setCustomId(`prizeInputModal`)
+        .setTitle(`What is the weekly prize for the contest?`)
+        .addComponents(firstActionRow);
+
+    await interaction.showModal(prizeInputModal); // Show the modal to the user who made this interaction.
+}
+
+module.exports = { showSetChannelModal, showSetHashtagsModal, showDeadlineModal, showPrizeInputModal };

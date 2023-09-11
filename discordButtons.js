@@ -15,4 +15,9 @@ const exportButton = new ButtonBuilder()
     .setLabel(`Export Data`)
     .setStyle(`3`);
 
-    module.exports = { setChannelButton, setHashtagsButton, exportButton };
+const prizeButton = new ButtonBuilder()
+    .setCustomId(`prizeButton`)
+    .setLabel(`Set Prize`)
+    .setStyle(`3`);
+
+module.exports = { setChannelButton, setHashtagsButton, exportButton, prizeButton };

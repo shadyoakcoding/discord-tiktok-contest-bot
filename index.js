@@ -5,9 +5,9 @@ const fs = require('fs');
 const path = require('node:path');
 
 // Required imports from other files
-const { replyInvalidChannelEmbed, replyChannelSavedEmbed, replyNoHashtagsEmbed, replyHashtagsEmbed, replyInvalidDaysEmbed, replyExportingDataEmbed, dmExportEmbed } = require(`./embedCreator.js`);
-const { showSetChannelModal, showSetHashtagsModal, showDeadlineModal } = require(`./modalCreator.js`);
-const { loadSettings, setChannelID, setHashtags, getChannelID } = require(`./settings.js`);
+const { replyInvalidChannelEmbed, replyChannelSavedEmbed, replyNoHashtagsEmbed, replyHashtagsEmbed, replyInvalidDaysEmbed, replyExportingDataEmbed, dmExportEmbed, replyPrizeEmbed } = require(`./embedCreator.js`);
+const { showSetChannelModal, showSetHashtagsModal, showDeadlineModal, showPrizeInputModal } = require(`./modalCreator.js`);
+const { loadSettings, setChannelID, setHashtags, getChannelID, setPrize } = require(`./settings.js`);
 const { tiktokUploadTime, getFullURL, createExport } = require(`./tiktok.js`);
 
 const client = new Client({ // Create a new client instance
@@ -58,7 +58,9 @@ client.on('interactionCreate', async interaction => { // Discord interaction lis
             case `exportButton`:
                 await showDeadlineModal(interaction);
                 break;
-
+            case `prizeButton`:
+                await showPrizeInputModal(interaction);
+                break;
             // Modal Interactions
             case `channelIDModal`:
                 let channelID = interaction.fields.components[0].components[0].value;
@@ -89,6 +91,11 @@ client.on('interactionCreate', async interaction => { // Discord interaction lis
                 } else {
                     await replyInvalidDaysEmbed(interaction);
                 }
+                break;
+            case `prizeInputModal`:
+                let prizeInput = interaction.fields.components[0].components[0].value;
+                setPrize(prizeInput);
+                await replyPrizeEmbed(interaction, prizeInput);
                 break;
         }
     }

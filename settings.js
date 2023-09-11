@@ -4,6 +4,7 @@ const fs = require('fs');
 let settings = {
   hashtags: ['#BoomerNA', '#BoomerNAisBack'],
   channelID: '1145136919995498559',
+  prize: ``,
 };
 
 function loadSettings() { // Load settings from the JSON file, if it exists
@@ -42,4 +43,13 @@ function setChannelID(newChannelID) { // Function to set a new channelID
   saveSettings();
 }
 
-module.exports = { settings, loadSettings, setChannelID, getChannelID, setHashtags, getHashtags };
+function getPrize() { // Function to get the current prize
+  return settings.prize;
+}
+
+function setPrize(newPrize) { // Function to set a new prize
+  settings.prize = newPrize;
+  saveSettings();
+}
+
+module.exports = { settings, loadSettings, setChannelID, getChannelID, setHashtags, getHashtags, getPrize, setPrize };
