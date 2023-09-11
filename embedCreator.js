@@ -42,11 +42,24 @@ async function replyAdminRequiredEmbed(interaction) { // Replies an embed saying
 
 async function replyContestEmbed(interaction) { // Replies an embed with contest information.
     let TEMPORARY_CHANNEL_ID = `755747171638181936`;
-    let HASHTAGSTRING = "#pogchamp";
+    let HASHTAGS = getHashtags();
+    let HASHTAGSTRING = ``;
+    for ( let hashtagNumber = 0; hashtagNumber < HASHTAGS.length; hashtagNumber++ ) { // Iterating through all of the hashtags.
+        HASHTAGSTRING += `[**${HASHTAGS[hashtagNumber]}**](https://www.tiktok.com/search/video?q=%23${HASHTAGS[hashtagNumber].substring(1)})`;
+        if (HASHTAGS.length == 2 && hashtagNumber != 1) {
+            HASHTAGSTRING += ` and `;
+        }
+        if (HASHTAGS.length > 2) {
+            if(hashtagNumber != HASHTAGS.length - 1) {
+                HASHTAGSTRING += `, `;
+            } else {
+                HASHTAGSTRING += ` and `
+            }
+        }
+    }
     let adminOnlyEmbed = createDefaultEmbed()
         .setDescription(`# TikTok Contest!
     \nSubmit your TikToks in <#${TEMPORARY_CHANNEL_ID}> and the submission with the most views every week will win [PRIZE].
-    \n
     \nBe sure to use the hashtags ${HASHTAGSTRING} in order for your TikTok to be counted!`);
     await interaction.editReply({
         embeds: [adminOnlyEmbed],
@@ -106,7 +119,7 @@ async function replyAdminOnlyEmbed(interaction) { // Replies an embed if the use
 async function replyInvalidDaysEmbed(interaction) { // Replies an embed saying the inputted days is invalid.
     await interaction.deferReply({ ephemeral: true }); // Sends a deferred reply that is ephemeral.
     let invalidDaysEmbed = createDefaultEmbed()
-        .setDescription(`# Invalid Age Input\n\`${interaction.fields.components[0].components[0].value}\` isn't a valid amount of days. Please enter an integer that is less than 1000.`);
+        .setDescription(`# Invalid Age Input\n\`${interaction.fields.components[0].components[0].value}\` isn't a valid amount of days. Please enter an integer that is less than 31.`);
     await interaction.editReply({
         embeds: [invalidDaysEmbed],
         ephemeral: true

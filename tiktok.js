@@ -4,7 +4,7 @@ const fs = require('fs');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const { getHashtags } = require(`./settings.js`);
 
-const TIKTOK_DATA = `./tiktok_data.csv`;
+const TIKTOK_DATA_PATH = `./tiktok_data.csv`;
 const OUTPUT_CSV = 'export.csv';
 
 function tiktokUploadTime(videoID) { // Function to get the time that a tikotk was uploaded based on the video ID. This is thanks to https://dfir.blog/tinkering-with-tiktok-timestamps/.
@@ -40,7 +40,6 @@ async function getVideoDetails(URL) { // A function that will take a given TikTo
 
     const tiktokUrl = URL; // Replace with the actual TikTok URL
     await page.goto(tiktokUrl);
-
 
     const getHashtagsArray = async () => { // Function to get text content of StrongText elements within the specified selector
         const selector = '[data-e2e="browse-video-desc"]'; // The selector that holds all of the strongText (hashtags)
@@ -122,53 +121,32 @@ async function getFullURL(shortenedURL) { // Getting the full URL of a shortened
 async function createExport(maxAge) { // Exports the data, only considering tiktoks uploaded less than maxAge days ago.
     const requiredHashtags = getHashtags().map(tag => tag.toLowerCase()); // The required hashtags array but in lowercase
     const newFile = []; // Creating what will be the new csv file.
-    const promises = []; // Array to hold all the promises.
-    await new Promise((resolve, reject) => {
-        fs.createReadStream(TIKTOK_DATA)
-            .pipe(csv())
-            .on('data', (row) => {
-                const ageInDays = Math.floor((new Date() - new Date(row.uploadDate)) / (1000 * 60 * 60 * 24)); // Making sure tiktok age in days is low enough
-                if (ageInDays <= maxAge) {
-                    const promise = getVideoDetails(row.tikTokLink)
-                        .then((stats) => {
-                            const newRow = {
-                                'Upload Date': row.uploadDate,
-                                'Discord Handle': row.discordHandle,
-                                'Discord ID': row.discordID,
-                                'TikTok Link': row.tikTokLink,
-                                'Likes': stats.likeCount,
-                                'Comments': stats.commentCount,
-                                'Bookmarks': stats.bookmarkCount,
-                                'Shares': stats.shareCount,
-                            };
-                            const tikTokHashtags = stats.hashtags.map(tag => tag.toLowerCase().trim()); // The hashtags in the tiktok but in lowercase.
-                            for (const requiredTag of requiredHashtags) {
-                                if (tikTokHashtags.includes(requiredTag)) {
-                                    newFile.push(newRow); // At least one value from requiredHashtags (case-insensitive) is in stats.hashtags
-                                    break; // Exit the loop once a match is found
-                                }
-                            }
-                        })
-                        .catch((error) => {
-                            console.error('Error fetching video details:', error);
-                        });
-                    promises.push(promise);
+    let TIKTOK_DATA_RAW = fs.readFileSync(TIKTOK_DATA_PATH, 'utf-8'); // Read the contents of the tiktok data file.
+    const TIKTOK_DATA = TIKTOK_DATA_RAW.trim().split('\n').map(row => row.split(','));
+    for (let i = 1; i < TIKTOK_DATA.length; i++) { // Iterating through the array of rows, discluding the header row
+        const ageInDays = Math.floor((new Date() - new Date(TIKTOK_DATA[i][3])) / (1000 * 60 * 60 * 24)); // Making sure tiktok age in days is low enough
+        if (ageInDays <= maxAge) {
+            let stats = await getVideoDetails(TIKTOK_DATA[i][2]); // Calling getVideoDetails on the tiktok URL for that row.
+            if (!stats) break; // Going to the next TikTok if stats couldn't be pulled for this one.
+            const newRow = {
+                'Upload Date': TIKTOK_DATA[i][3],
+                'Discord Handle': TIKTOK_DATA[i][0],
+                'Discord ID': TIKTOK_DATA[i][1],
+                'TikTok Link': TIKTOK_DATA[i][2],
+                'Likes': stats.likeCount,
+                'Comments': stats.commentCount,
+                'Bookmarks': stats.bookmarkCount,
+                'Shares': stats.shareCount,
+            };
+            const tikTokHashtags = stats.hashtags.map(tag => tag.toLowerCase().trim()); // The hashtags in the tiktok but in lowercase.
+            for (const requiredTag of requiredHashtags) {
+                if (tikTokHashtags.includes(requiredTag)) { // Requires one of the hashtags in the tiktok to be one of the required hashtags.
+                    newFile.push(newRow); // At least one value from requiredHashtags (case-insensitive) is in stats.hashtags
+                    break; // Exit the loop once a match is found
                 }
-            })
-            .on('end', () => {
-                Promise.all(promises)
-                    .then(() => {
-                        resolve();
-                    })
-                    .catch((error) => {
-                        reject(error);
-                    });
-            })
-            .on('error', (error) => {
-                reject(error);
-            });
-    });
-
+            }
+        }
+    }
     const csvWriter = createCsvWriter({
         path: OUTPUT_CSV,
         header: ['Upload Date', 'Discord Handle', 'Discord ID', 'TikTok Link', 'Likes', 'Comments', 'Bookmarks', 'Shares'],
