@@ -31,13 +31,20 @@ function tiktokUploadTime(videoID) { // Function to get the time that a tikotk w
 
 async function getVideoDetails(URL) { // A function that will take a given TikTok URL and provide details such as upload time, uploader, likes, bookmarks, comments, and shares.
     console.log(`Getting video details of ${URL}.`);
-    let proxyServer = getRandomProxy(); // Getting a random proxy to call puppeteer with.
-    const browser = await puppeteer.launch({
-        headless: "new",
-        args: [`--proxy-server=${proxyServer}`]
-    }); // Launching the puppeteer browser.
-    const page = await browser.newPage();
+    let proxyInfo = getRandomProxy();
+    let proxyArgs = [
+        `--proxy-server=${proxyInfo.host}:${proxyInfo.port}`,
+    ];
 
+    const browser = await puppeteer.launch({
+        headless: true, // Set to true for headless mode, false if you want to see the browser UI
+        args: proxyArgs
+    });
+    const page = await browser.newPage();
+    await page.authenticate({
+        username: proxyInfo.username,
+        password: proxyInfo.password,
+    });
     const tiktokUrl = URL; // Replace with the actual TikTok URL
     await page.goto(tiktokUrl);
 
@@ -155,12 +162,22 @@ async function createExport(maxAge) { // Exports the data, only considering tikt
     console.log('CSV file processing completed.');
 }
 
-function getRandomProxy() { // Gets a random proxy from proxies.txt
-    const fileContents = fs.readFileSync(`./proxies.txt`, 'utf-8'); // Read the contents of the file
-    const proxiesArray = fileContents.split('\n').map(line => line.trim()); // Split the proxies file into an array.
-    const validProxies = proxiesArray.filter(proxy => proxy !== ''); // Filter out any empty lines
-    const randomIndex = Math.floor(Math.random() * validProxies.length); // Get a random index within the range of valid proxies
-    return validProxies[randomIndex]; // Return a random proxy
+function parseProxy(proxyString) {
+    const [host, port, username, password] = proxyString.split(':');
+    return {
+        host,
+        port,
+        username,
+        password
+    };
+}
+
+function getRandomProxy() {
+    const fileContents = fs.readFileSync('./proxies.txt', 'utf-8');
+    const proxiesArray = fileContents.split('\n').map(line => line.trim());
+    const validProxies = proxiesArray.filter(proxy => proxy !== '');
+    const randomIndex = Math.floor(Math.random() * validProxies.length);
+    return parseProxy(validProxies[randomIndex]); // Return a parsed proxy object
 }
 
 module.exports = { tiktokUploadTime, getFullURL, createExport };
