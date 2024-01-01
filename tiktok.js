@@ -117,7 +117,7 @@ async function getFullURL(shortenedURL) { // Getting the full URL of a shortened
                 return fullURL;
             }
         } else {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+            console.log(`HTTP error! Status: ${response.status} when shortening the link:\n${shortenedURL}`)
         }
     } catch (error) {
         console.error(error);
